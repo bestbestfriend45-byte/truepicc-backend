@@ -1,0 +1,50 @@
+﻿<!doctype html><html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Truepicc Admin  редактирование</title>
+<style>
+body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#fff;margin:0}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #e6e8eb}
+.container{max-width:900px;margin:0 auto;padding:12px 16px}
+label{display:block;margin-top:10px;font-weight:600}
+input{width:100%;padding:10px;border:1px solid #cdd3df;border-radius:8px}
+small{color:#667}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:700px){.row{grid-template-columns:1fr}}
+a.btn, button.btn{display:inline-block;padding:8px 10px;border:1px solid #1565C0;background:#1565C0;color:#fff;border-radius:8px;text-decoration:none}
+.meta{color:#667}
+</style>
+</head><body>
+<header class="container">
+  <div><a class="btn" href="/admin/photos"> Назад к списку</a></div>
+  <div><a class="btn" href="/verify/{{ p.id }}" target="_blank">Открыть verify</a></div>
+</header>
+
+<div class="container">
+  <h3>ID: {{ p.id }}</h3>
+  <p class="meta">Хэш: {{ p.hash_sha256 }}</p>
+
+  <form method="post">
+    <label>Время устройства (UTC)</label>
+    <input name="device_time_utc" value="{{ p.device_time_utc }}" placeholder="YYYY-MM-DDTHH:MM:SSZ">
+    <small>Пример: 2025-09-10T08:21:30Z</small>
+
+    <label style="margin-top:12px">Время сервера (UTC)</label>
+    <input name="created_server_utc" value="{{ p.created_server_utc }}" placeholder="YYYY-MM-DDTHH:MM:SSZ">
+
+    <div class="row">
+      <div>
+        <label style="margin-top:12px">Широта (lat)</label>
+        <input name="lat" value="{{ '%.6f'|format(p.lat) }}">
+      </div>
+      <div>
+        <label style="margin-top:12px">Долгота (lon)</label>
+        <input name="lon" value="{{ '%.6f'|format(p.lon) }}">
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn" type="submit">Сохранить изменения</button>
+    </div>
+  </form>
+</div>
+</body></html>

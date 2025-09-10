@@ -1,0 +1,22 @@
+﻿<!doctype html><html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Truepicc Admin — вход</title>
+<style>
+body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#f7f8fa;margin:0}
+.card{max-width:420px;margin:10vh auto;padding:20px;background:#fff;border:1px solid #e6e8eb;border-radius:12px}
+h2{margin:0 0 12px}
+input{width:100%;padding:10px;margin:6px 0 12px;border:1px solid #cdd3df;border-radius:8px}
+button{padding:10px 14px;border-radius:10px;border:1px solid #1565C0;background:#1565C0;color:#fff}
+.err{color:#C62828;margin-bottom:8px}
+</style>
+</head><body>
+<div class="card">
+  <h2>Вход администратора</h2>
+  {% if error %}<div class="err">{{ error }}</div>{% endif %}
+  <form method="post">
+    <input name="username" placeholder="Логин" required>
+    <input type="password" name="password" placeholder="Пароль" required>
+    <button type="submit">Войти</button>
+  </form>
+</div>
+</body></html>

@@ -1,0 +1,126 @@
+﻿<!doctype html><html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Truepicc Verify</title>
+<style>
+/* Фоновое изображение: загруженное фото с прозрачностью 20% */
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  background:#f8fafc;
+  position:relative;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background: center/cover no-repeat url("{{ img_web }}");
+  opacity:.2;               /* 20% */
+  pointer-events:none;
+  z-index:0;                /* фон ниже всего */
+}
+
+/* Основной контент поверх фона */
+.wrap{position:relative; z-index:1; max-width:980px; margin:0 auto; padding:16px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;backdrop-filter:saturate(120%) blur(0px)}
+.grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+img.photo{max-width:100%;height:auto;border-radius:8px;border:1px solid #e5e7eb}
+img.map{width:213px;height:auto;border-radius:8px;border:1px solid #e5e7eb}
+.map-iframe{width:213px;height:120px;border:0;border-radius:8px}
+.meta{color:#475569;font-size:14px;margin:6px 0}
+h2{margin:0 0 8px}
+.badge{display:inline-block;padding:2px 8px;border:1px solid #d1d5db;border-radius:999px;font-size:12px;color:#4b5563;background:#f9fafb}
+.qr{margin-top:12px}
+.btn{display:inline-block;margin-top:8px;padding:8px 10px;border:1px solid #1565C0;background:#1565C0;color:#fff;border-radius:8px;text-decoration:none}
+label{font-weight:600}
+select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px}
+</style>
+</head><body>
+<div class="wrap">
+  <div class="card">
+    <div class="grid">
+      <div>
+        <img class="photo" src="{{ img_web }}" alt="photo">
+
+        <div class="qr">
+          <div class="meta"><span class="badge">QR на эту страницу</span></div>
+          <img src="{{ qr_png }}" alt="QR" onerror="this.style.display='none'">
+        </div>
+      </div>
+
+      <div>
+        <h2>Данные съёмки</h2>
+        <div class="meta">
+          <label for="tz">Часовой пояс:</label><br>
+          <select id="tz">
+            <option value="Asia/Almaty">Астана / Алматы (Asia/Almaty)</option>
+            <option value="UTC">UTC (Coordinated Universal Time)</option>
+            <option value="Europe/Moscow">Москва (Europe/Moscow)</option>
+            <option value="Europe/London">Лондон (Europe/London)</option>
+            <option value="Europe/Berlin">Берлин (Europe/Berlin)</option>
+            <option value="Asia/Dubai">Дубай (Asia/Dubai)</option>
+            <option value="Asia/Tashkent">Ташкент (Asia/Tashkent)</option>
+            <option value="America/New_York">Нью-Йорк (America/New_York)</option>
+            <option value="America/Los_Angeles">Лос-Анджелес (America/Los_Angeles)</option>
+          </select>
+        </div>
+
+        <!-- Вместо "время устройства/сервера" показываем просто Дата/Время снимка -->
+        <div class="meta"><b>Дата:</b> <span id="date-local"></span></div>
+        <div class="meta"><b>Время:</b> <span id="time-local"></span></div>
+
+        <h2 style="margin-top:12px">Местоположение</h2>
+        <div class="meta"><b>Адрес:</b> {{ place_name or "" }}</div>
+        <div class="meta"><b>Координаты:</b> {{ '%.6f'|format(lat) }}, {{ '%.6f'|format(lon) }}</div>
+
+        {% if static_map_url %}
+          <div class="meta"><span class="badge">Google Static Maps (мини)</span></div>
+          <a target="_blank" href="https://maps.google.com/?q={{ lat }},{{ lon }}">
+            <img class="map" src="{{ static_map_url }}" alt="map">
+          </a>
+        {% else %}
+          <div class="meta"><span class="badge">Google Maps (встраиваемая мини-карта)</span></div>
+          <div>
+            <iframe class="map-iframe" src="{{ embed_map_url }}" allowfullscreen loading="lazy"></iframe>
+          </div>
+        {% endif %}
+
+        <a class="btn" target="_blank" href="https://maps.google.com/?q={{ lat }},{{ lon }}">Открыть в Google Maps</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Часовой пояс: по умолчанию Asia/Almaty, хранится в localStorage */
+const defaultTz = 'Asia/Almaty';
+const tzKey = 'truepicc_tz';
+const select = document.getElementById('tz');
+select.value = localStorage.getItem(tzKey) || defaultTz;
+
+/* Время снимка приходит как UTC-ISO (device_time_utc) */
+const deviceUtc = "{{ device_time_utc }}";
+
+function fmtDate(utcStr, tz) {
+  try {
+    const d = new Date(utcStr);
+    return new Intl.DateTimeFormat('ru-RU', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(d);
+  } catch { return ''; }
+}
+function fmtTime(utcStr, tz) {
+  try {
+    const d = new Date(utcStr);
+    return new Intl.DateTimeFormat('ru-RU', { timeZone: tz, hour:'2-digit', minute:'2-digit', second:'2-digit' }).format(d);
+  } catch { return ''; }
+}
+function render() {
+  const tz = select.value || defaultTz;
+  document.getElementById('date-local').textContent = fmtDate(deviceUtc, tz);
+  document.getElementById('time-local').textContent = fmtTime(deviceUtc, tz);
+}
+select.addEventListener('change', () => { localStorage.setItem(tzKey, select.value); render(); });
+render();
+</script>
+</body></html>
