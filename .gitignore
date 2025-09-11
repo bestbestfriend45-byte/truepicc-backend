@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.pyc
 *.pyo
@@ -15,3 +15,5 @@ __pycache__/
 storage/
 *.db
 *.sqlite
+
+*.bak
