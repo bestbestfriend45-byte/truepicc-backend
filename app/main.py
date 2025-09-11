@@ -36,6 +36,21 @@ GMAPS_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
 Base.metadata.create_all(ENGINE)
 
 app = FastAPI(title="Truepicc API")
+
+from sqlalchemy import text
+from app.database import Base, engine
+
+@app.on_event("startup")
+def on_startup_db_check():
+    # Создадим таблицы (если их ещё нет) и проверим соединение
+    try:
+        Base.metadata.create_all(bind=engine)
+        with engine.connect() as conn:
+            conn.execute(text("select 1"))
+        print("[Truepicc] DB OK: подключение к Postgres установлено")
+    except Exception as e:
+        print("[Truepicc] DB ERROR:", e)
+        raise
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET, max_age=24*3600)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -283,3 +298,4 @@ def admin_photos(request: Request, q: Optional[str] = None, page: int = 1, page_
     return templates.TemplateResponse("admin_list.html", {
         "request": request, "rows": rows, "q": q or "", "page": page, "page_size": page_size
     })
+

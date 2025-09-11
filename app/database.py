@@ -1,39 +1,33 @@
-﻿from sqlalchemy import create_engine, Integer, Float, String, Boolean
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
+﻿import os
+from urllib.parse import urlparse
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-ENGINE = create_engine("sqlite:///./data.db", connect_args={"check_same_thread": False})
+# Обязательно берём Postgres из переменной окружения на Render
+DB_URL = os.getenv("DATABASE_URL")
+if not DB_URL:
+    raise RuntimeError(
+        "DATABASE_URL не задан. Задайте переменную окружения на Render (Neon SQLAlchemy URL с sslmode=require)."
+    )
 
-class Base(DeclarativeBase):
-    pass
+# Соединение с Postgres (sync, psycopg2), с пингом пула
+engine = create_engine(
+    DB_URL,
+    pool_pre_ping=True,
+    pool_size=int(os.getenv("DB_POOL_SIZE", "5")),
+    max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "5")),
+)
 
-class Photo(Base):
-    __tablename__ = "photos"
-    id: Mapped[str] = mapped_column(String(40), primary_key=True)
-    created_server_utc: Mapped[str] = mapped_column(String(32))       # ISO-8601 UTC
-    device_time_utc: Mapped[str] = mapped_column(String(32))          # ISO-8601 UTC
-    tz_offset_min: Mapped[int] = mapped_column(Integer)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-    lat: Mapped[float] = mapped_column(Float)
-    lon: Mapped[float] = mapped_column(Float)
-    accuracy_m: Mapped[float | None] = mapped_column(Float, nullable=True)
-    altitude_m: Mapped[float | None] = mapped_column(Float, nullable=True)
-    provider: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    is_mock: Mapped[bool] = mapped_column(Boolean)
+def _mask_db_url(u: str) -> str:
+    try:
+        p = urlparse(u)
+        # не печатаем логин/пароль
+        dbname = p.path.rsplit("/", 1)[-1] if "/" in p.path else p.path
+        return f"{p.scheme}://{p.hostname}/{dbname}?{p.query}"
+    except Exception:
+        return "<hidden>"
 
-    device_model: Mapped[str] = mapped_column(String(64))
-    android_api: Mapped[int] = mapped_column(Integer)
-    app_version: Mapped[str] = mapped_column(String(32))
-
-    image_key_original: Mapped[str] = mapped_column(String(256))
-    image_key_web: Mapped[str] = mapped_column(String(256))
-    hash_sha256: Mapped[str] = mapped_column(String(64))
-
-class PhotoAudit(Base):
-    __tablename__ = "photo_audit"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    photo_id: Mapped[str] = mapped_column(String(40))
-    field: Mapped[str] = mapped_column(String(64))
-    old_value: Mapped[str] = mapped_column(String(256))
-    new_value: Mapped[str] = mapped_column(String(256))
-    changed_by: Mapped[str] = mapped_column(String(64))               # admin username
-    changed_at_utc: Mapped[str] = mapped_column(String(32))           # ISO-8601 UTC
+print(f"[Truepicc] DATABASE_URL -> {_mask_db_url(DB_URL)}")
