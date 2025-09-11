@@ -1,16 +1,16 @@
-﻿import os
+import os
 from urllib.parse import urlparse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Обязательно берём Postgres из переменной окружения на Render
+# РћР±СЏР·Р°С‚РµР»СЊРЅРѕ Р±РµСЂС‘Рј Postgres РёР· РїРµСЂРµРјРµРЅРЅРѕР№ РѕРєСЂСѓР¶РµРЅРёСЏ РЅР° Render
 DB_URL = os.getenv("DATABASE_URL")
 if not DB_URL:
     raise RuntimeError(
-        "DATABASE_URL не задан. Задайте переменную окружения на Render (Neon SQLAlchemy URL с sslmode=require)."
+        "DATABASE_URL РЅРµ Р·Р°РґР°РЅ. Р—Р°РґР°Р№С‚Рµ РїРµСЂРµРјРµРЅРЅСѓСЋ РѕРєСЂСѓР¶РµРЅРёСЏ РЅР° Render (Neon SQLAlchemy URL СЃ sslmode=require)."
     )
 
-# Соединение с Postgres (sync, psycopg2), с пингом пула
+# РЎРѕРµРґРёРЅРµРЅРёРµ СЃ Postgres (sync, psycopg2), СЃ РїРёРЅРіРѕРј РїСѓР»Р°
 engine = create_engine(
     DB_URL,
     pool_pre_ping=True,
@@ -24,7 +24,7 @@ Base = declarative_base()
 def _mask_db_url(u: str) -> str:
     try:
         p = urlparse(u)
-        # не печатаем логин/пароль
+        # РЅРµ РїРµС‡Р°С‚Р°РµРј Р»РѕРіРёРЅ/РїР°СЂРѕР»СЊ
         dbname = p.path.rsplit("/", 1)[-1] if "/" in p.path else p.path
         return f"{p.scheme}://{p.hostname}/{dbname}?{p.query}"
     except Exception:
